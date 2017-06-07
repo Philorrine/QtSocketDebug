@@ -9,10 +9,22 @@ extern MainWindow* pWnd;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    m_bIsConnect(false)
 {
     ui->setupUi(this);
+    IniTcpServerUI();
+    IniTcpClientUI();
 
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::IniTcpServerUI()
+{
     connect(this, SIGNAL(recvMsg(QString)), ui->textEdit_tcpServer_recv, SLOT(append(QString)));
 
     QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
@@ -31,9 +43,24 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_tcpServer_localPort->setText(Port.toString());
 }
 
-MainWindow::~MainWindow()
+void MainWindow::IniTcpClientUI()
 {
-    delete ui;
+   connect(this, SIGNAL(clientRecvMsg(QString)), ui->textEdit_tcpClient_recv, SLOT(append(QString)));
+
+   QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
+   for (int i = 0; i< ipAddressesList.size(); i++)
+   {
+       if (ipAddressesList[i].toIPv4Address())
+           ui->comboBox_tcpClient_serverIP->addItem(ipAddressesList[i].toString());
+   }
+
+   IniConfig config(INI_PATH);
+   QString section = QString().sprintf("TcpClient%d", TCP_CLIENT_ID);
+   QVariant IP = config.GetValue(section, "Address", ui->comboBox_tcpClient_serverIP->currentText());
+   QVariant Port = config.GetValue(section, "Port", ui->lineEdit_tcpClient_serverPort->text());
+
+   ui->comboBox_tcpClient_serverIP->setCurrentText(IP.toString());
+   ui->lineEdit_tcpClient_serverPort->setText(Port.toString());
 }
 
 void MainWindow::on_pushButton_tcpServer_bind_clicked()
@@ -42,6 +69,7 @@ void MainWindow::on_pushButton_tcpServer_bind_clicked()
     QString section = QString().sprintf("TcpServer%d", TCP_SERVER_ID);
     config.SetValue(section, "Address", ui->comboBox_tcpServer_localIP->currentText());
     config.SetValue(section, "Port", ui->lineEdit_tcpServer_localPort->text());
+
     InitSocket(TCP_SERVER_ID, TCP_SERVER, INI_PATH, RecvProc);
 }
 
@@ -85,4 +113,71 @@ int RecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRe
         break;
     }
     return 0;
+}
+
+int TcpClientRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
+{
+    switch (nType) {
+    case RECV_SOCKET:
+        //pWnd->addClient(QString().sprintf("%s:%d", szIP, nPort));
+        break;
+    case RECV_DATA:
+        emit pWnd->clientRecvMsg(QString().sprintf("[Received from Server %s:%d]: %s", szIP, nPort, szRecv));
+        break;
+    case RECV_CLOSE:
+        //pWnd->delClient(QString().sprintf("%s:%d", szIP, nPort));
+        break;
+    case RECV_ERROR:
+        break;
+    default:
+        break;
+    }
+    return 0;
+}
+
+void MainWindow::on_pushButton_tcpClient_Connect_clicked()
+{
+    if (!m_bIsConnect)
+   {
+        IniConfig config(INI_PATH);
+        QString section = QString().sprintf("TcpClient%d", TCP_CLIENT_ID);
+        config.SetValue(section, "Address", ui->comboBox_tcpClient_serverIP->currentText());
+        config.SetValue(section, "Port", ui->lineEdit_tcpClient_serverPort->text());
+        InitSocket(TCP_CLIENT_ID, TCP_CLIENT, INI_PATH, TcpClientRecvProc);
+        if (TCPConnect(TCP_CLIENT_ID, 50000))
+        {
+            m_bIsConnect = true;
+            ui->pushButton_tcpClient_Connect->setText("断开");
+            //ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(255, 0, 0);");
+        }
+        else
+        {
+            m_bIsConnect = false;
+            ui->pushButton_tcpClient_Connect->setText("连接");
+            //ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
+        }
+    }
+    else
+    {
+//        UninitSocket(TCP_CLIENT_ID);
+//        m_bIsConnect = false;
+        ui->pushButton_tcpClient_Connect->setText("连接");
+//        ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
+
+    }
+}
+
+void MainWindow::on_pushButton_tcpClient_send_clicked()
+{
+    QString msg = ui->textEdit_tcpClient_send->toPlainText();
+    TCPSend(TCP_CLIENT_ID, msg.toStdString().c_str());
+    emit clientRecvMsg(QString().sprintf("[Send]: %s", msg.toStdString().c_str()));
+}
+
+void MainWindow::on_pushButton_tcpClient_recv_clicked()
+{
+     char szRecv[1024*4] = { 0 };
+     TCPRecv(TCP_CLIENT_ID, szRecv, sizeof(szRecv), 50000);
+     QString msg = QString(QLatin1String(szRecv));
+     emit clientRecvMsg(msg);
 }

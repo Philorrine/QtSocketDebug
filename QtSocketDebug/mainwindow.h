@@ -26,15 +26,21 @@ public:
 
 signals:
     void recvMsg(QString msg);
+    void clientRecvMsg(QString msg);
 
 private slots:
     void on_pushButton_tcpServer_bind_clicked();
-
     void on_pushButton_tcpServer_send_clicked();
+    void on_pushButton_tcpClient_Connect_clicked();
+    void on_pushButton_tcpClient_send_clicked();
+
+    void on_pushButton_tcpClient_recv_clicked();
 
 private:
     Ui::MainWindow *ui;
-
+    void IniTcpServerUI();
+    void IniTcpClientUI();
+    bool m_bIsConnect;
     //int RecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
 };
 
