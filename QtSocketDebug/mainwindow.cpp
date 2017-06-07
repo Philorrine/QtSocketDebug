@@ -143,18 +143,19 @@ void MainWindow::on_pushButton_tcpClient_Connect_clicked()
         QString section = QString().sprintf("TcpClient%d", TCP_CLIENT_ID);
         config.SetValue(section, "Address", ui->comboBox_tcpClient_serverIP->currentText());
         config.SetValue(section, "Port", ui->lineEdit_tcpClient_serverPort->text());
-        InitSocket(TCP_CLIENT_ID, TCP_CLIENT, INI_PATH, TcpClientRecvProc);
-        if (TCPConnect(TCP_CLIENT_ID, 50000))
+        InitSocket(TCP_CLIENT_ID, TCP_CLIENT, INI_PATH, NULL);
+        if (!TCPConnect(TCP_CLIENT_ID, 50000))
         {
             m_bIsConnect = true;
             ui->pushButton_tcpClient_Connect->setText("断开");
-            //ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(255, 0, 0);");
+            ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(255, 0, 0);");
+            m_thread.start();
         }
         else
         {
             m_bIsConnect = false;
             ui->pushButton_tcpClient_Connect->setText("连接");
-            //ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
+            ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
         }
     }
     else
@@ -162,7 +163,8 @@ void MainWindow::on_pushButton_tcpClient_Connect_clicked()
 //        UninitSocket(TCP_CLIENT_ID);
 //        m_bIsConnect = false;
         ui->pushButton_tcpClient_Connect->setText("连接");
-//        ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
+        ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
+        m_thread.stop();
 
     }
 }
@@ -176,8 +178,26 @@ void MainWindow::on_pushButton_tcpClient_send_clicked()
 
 void MainWindow::on_pushButton_tcpClient_recv_clicked()
 {
-     char szRecv[1024*4] = { 0 };
-     TCPRecv(TCP_CLIENT_ID, szRecv, sizeof(szRecv), 50000);
-     QString msg = QString(QLatin1String(szRecv));
-     emit clientRecvMsg(msg);
+   // m_thread.start();
+}
+
+CTcpClientRecvThread::CTcpClientRecvThread()
+    : m_bStop(false)
+{
+
+}
+
+void CTcpClientRecvThread::run()
+{
+    char szRecv[1024*4] = { 0 };
+    while(!m_bStop)
+    {
+        if (TCPRecv(TCP_CLIENT_ID, szRecv, sizeof(szRecv), 1000) == 0)
+            emit pWnd->clientRecvMsg(QString().sprintf("[Recv from server]: %s", szRecv));
+    }
+}
+
+void CTcpClientRecvThread::stop()
+{
+    m_bStop = true;
 }

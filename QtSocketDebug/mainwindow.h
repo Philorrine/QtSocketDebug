@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "socket.h"
+#include "QThread"
 
 #define INI_PATH        "SocketDebugger.ini"
 #define TCP_SERVER_ID   0
@@ -12,6 +13,18 @@
 namespace Ui {
 class MainWindow;
 }
+
+class CTcpClientRecvThread : public QThread
+{
+public:
+    CTcpClientRecvThread();
+    ~CTcpClientRecvThread() {}
+    void stop();
+protected:
+    void run();
+private:
+    volatile bool m_bStop;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -33,7 +46,6 @@ private slots:
     void on_pushButton_tcpServer_send_clicked();
     void on_pushButton_tcpClient_Connect_clicked();
     void on_pushButton_tcpClient_send_clicked();
-
     void on_pushButton_tcpClient_recv_clicked();
 
 private:
@@ -41,7 +53,8 @@ private:
     void IniTcpServerUI();
     void IniTcpClientUI();
     bool m_bIsConnect;
-    //int RecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
+    CTcpClientRecvThread m_thread;
 };
+
 
 #endif // MAINWINDOW_H
