@@ -33,6 +33,7 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
+LIBS += -L$$PWD/ -lsocket
 
 macx: LIBS += -L$$PWD/../../QtSocketLibrary/build-socket-Desktop_Qt_5_7_1_clang_64bit-Debug/ -lsocket.1.0.0
 

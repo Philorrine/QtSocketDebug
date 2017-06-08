@@ -3,7 +3,8 @@
 #include <QtNetwork>
 #include "iniconfig.h"
 
-int RecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
+int TcpServerRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
+int TcpClientRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
 
 extern MainWindow* pWnd;
 
@@ -70,7 +71,7 @@ void MainWindow::on_pushButton_tcpServer_bind_clicked()
     config.SetValue(section, "Address", ui->comboBox_tcpServer_localIP->currentText());
     config.SetValue(section, "Port", ui->lineEdit_tcpServer_localPort->text());
 
-    InitSocket(TCP_SERVER_ID, TCP_SERVER, INI_PATH, RecvProc);
+    InitSocket(TCP_SERVER_ID, TCP_SERVER, INI_PATH, TcpServerRecvProc);
 }
 
 void MainWindow::on_pushButton_tcpServer_send_clicked()
@@ -97,7 +98,7 @@ void MainWindow::delClient(QString client)
     ui->comboBox_tcpServer_clientList->removeItem(nIndex);
 }
 
-int RecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
+int TcpServerRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
 {
     switch (nType) {
     case RECV_SOCKET:
