@@ -93,15 +93,17 @@ void MainWindow::on_pushButton_tcpServer_bind_clicked()
 
 void MainWindow::on_pushButton_tcpServer_send_clicked()
 {
+    QTextCodec* codec = QTextCodec::codecForName("GB18030");
     QString address = ui->comboBox_tcpServer_clientList->currentText();
     QStringList strList = address.split(":");
     QString ip = strList.at(0);
     QString strPort = strList.at(1);
     int port = strPort.toInt();
-    QString msg = ui->textEdit_tcpServer_send->toPlainText();
-    TCPSend(TCP_SERVER_ID, msg.toStdString().c_str(), ip.toStdString().c_str(), port);
+    QString sendStr = ui->textEdit_tcpServer_send->toPlainText();
+    QByteArray msg = codec->fromUnicode(sendStr);
+    TCPSend(TCP_SERVER_ID, msg.data(), ip.toStdString().c_str(), port);
     emit tcpServerRecvMsg(QString().sprintf("[Send to %s]: %s", address.toStdString().c_str(),
-                                   msg.toStdString().c_str()));
+                                   sendStr.toStdString().c_str()));
 }
 
 void MainWindow::addClient(QString client)
@@ -115,14 +117,18 @@ void MainWindow::delClient(QString client)
     ui->comboBox_tcpServer_clientList->removeItem(nIndex);
 }
 
-int TcpServerRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, const char* szRecv)
+int TcpServerRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
 {
+    QTextCodec* codec = QTextCodec::codecForName("GB18030");
+    QString recvStr;
     switch (nType) {
     case RECV_SOCKET:
         pWnd->addClient(QString().sprintf("%s:%d", szIP, nPort));
         break;
     case RECV_DATA:
-        emit pWnd->tcpServerRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort, szRecv));
+        recvStr = codec->toUnicode(szRecv, nSize);
+        emit pWnd->tcpServerRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort,
+                                                      recvStr.toStdString().c_str()));
         break;
     case RECV_CLOSE:
         pWnd->delClient(QString().sprintf("%s:%d", szIP, nPort));
@@ -133,13 +139,17 @@ int TcpServerRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, con
     return 0;
 }
 
-int TcpClientRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, const char* szRecv)
+int TcpClientRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
 {
+    QTextCodec* codec = QTextCodec::codecForName("GB18030");
+    QString recvStr;
     switch (nType) {
     case RECV_SOCKET:
         break;
     case RECV_DATA:
-        emit pWnd->tcpClientRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort, szRecv));
+        recvStr = codec->toUnicode(szRecv, nSize);
+        emit pWnd->tcpClientRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort,
+                                                      recvStr.toStdString().c_str()));
         break;
     case RECV_CLOSE:
         break;
@@ -151,13 +161,17 @@ int TcpClientRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, con
     return 0;
 }
 
-int UdpRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, const char* szRecv)
+int UdpRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
 {
+    QTextCodec* codec = QTextCodec::codecForName("GB18030");
+    QString recvStr;
     switch (nType) {
     case RECV_SOCKET:
         break;
     case RECV_DATA:
-        emit pWnd->udpRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort, szRecv));
+        recvStr = codec->toUnicode(szRecv, nSize);
+        emit pWnd->udpRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort,
+                                                recvStr.toStdString().c_str()));
         break;
     case RECV_CLOSE:
         break;
@@ -171,8 +185,10 @@ int UdpRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, const cha
 
 void MainWindow::on_pushButton_tcpClient_send_clicked()
 {
+    QTextCodec* codec = QTextCodec::codecForName("GB18030");
     QString msg = ui->textEdit_tcpClient_send->toPlainText();
-    TCPSend(TCP_CLIENT_ID, msg.toStdString().c_str());
+    QByteArray sendBytes = codec->fromUnicode(msg);
+    TCPSend(TCP_CLIENT_ID, sendBytes.data());
     emit tcpClientRecvMsg(QString().sprintf("[Send to server]: %s", msg.toStdString().c_str()));
 }
 
@@ -216,9 +232,13 @@ void MainWindow::on_pushButton_udp_bind_clicked()
 
 void MainWindow::on_pushButton_udp_send_clicked()
 {
+    QTextCodec* codec = QTextCodec::codecForName("GB18030");
     QString strIP = ui->lineEdit_udp_remote_ip->text();
     int nPort = ui->lineEdit_udp_remote_port->text().toInt();
     QString msg = ui->textEdit_udp_send->toPlainText();
-    UDPSend(UDP_ID, msg.toStdString().c_str(),
+    QByteArray sendBytes = codec->fromUnicode(msg);
+    UDPSend(UDP_ID, sendBytes.data(),
             strIP.toStdString().c_str(), nPort);
+    emit udpRecvMsg(QString().sprintf("[Send to %s:%d]: %s", strIP.toStdString().c_str(), nPort,
+                                      msg.toStdString().c_str()));
 }
