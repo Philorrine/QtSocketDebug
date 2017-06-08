@@ -5,28 +5,32 @@
 
 int TcpServerRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
 int TcpClientRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
+int UdpRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv);
 
 extern MainWindow* pWnd;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_bIsConnect(false)
+    m_bTcpClientIsConnect(false)
 {
     ui->setupUi(this);
-    IniTcpServerUI();
-    IniTcpClientUI();
-
+    InitTcpServerUI();
+    InitTcpClientUI();
+    InitUdpUI();
 }
 
 MainWindow::~MainWindow()
 {
+    UninitSocket(TCP_SERVER_ID);
+    UninitSocket(TCP_CLIENT_ID);
+    UninitSocket(UDP_ID);
     delete ui;
 }
 
-void MainWindow::IniTcpServerUI()
+void MainWindow::InitTcpServerUI()
 {
-    connect(this, SIGNAL(recvMsg(QString)), ui->textEdit_tcpServer_recv, SLOT(append(QString)));
+    connect(this, SIGNAL(tcpServerRecvMsg(QString)), ui->textEdit_tcpServer_recv, SLOT(append(QString)));
 
     QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
     for (int i = 0; i < ipAddressesList.size(); ++i)
@@ -38,30 +42,43 @@ void MainWindow::IniTcpServerUI()
     IniConfig config(INI_PATH);
     QString section = QString().sprintf("TcpServer%d", TCP_SERVER_ID);
     QVariant IP = config.GetValue(section, "Address", ui->comboBox_tcpServer_localIP->currentText());
-    QVariant Port = config.GetValue(section, "Port", ui->lineEdit_tcpServer_localPort->text());
+    QVariant Port = config.GetValue(section, "Port", 9999);
 
     ui->comboBox_tcpServer_localIP->setCurrentText(IP.toString());
     ui->lineEdit_tcpServer_localPort->setText(Port.toString());
 }
 
-void MainWindow::IniTcpClientUI()
+void MainWindow::InitTcpClientUI()
 {
-   connect(this, SIGNAL(clientRecvMsg(QString)), ui->textEdit_tcpClient_recv, SLOT(append(QString)));
-
-   QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
-   for (int i = 0; i< ipAddressesList.size(); i++)
-   {
-       if (ipAddressesList[i].toIPv4Address())
-           ui->comboBox_tcpClient_serverIP->addItem(ipAddressesList[i].toString());
-   }
+   connect(this, SIGNAL(tcpClientRecvMsg(QString)), ui->textEdit_tcpClient_recv, SLOT(append(QString)));
 
    IniConfig config(INI_PATH);
    QString section = QString().sprintf("TcpClient%d", TCP_CLIENT_ID);
-   QVariant IP = config.GetValue(section, "Address", ui->comboBox_tcpClient_serverIP->currentText());
-   QVariant Port = config.GetValue(section, "Port", ui->lineEdit_tcpClient_serverPort->text());
+   QVariant IP = config.GetValue(section, "Address", "127.0.0.1");
+   QVariant Port = config.GetValue(section, "Port", 9999);
 
-   ui->comboBox_tcpClient_serverIP->setCurrentText(IP.toString());
+   ui->lineEdit_tcpClient_serverIp->setText(IP.toString());
    ui->lineEdit_tcpClient_serverPort->setText(Port.toString());
+}
+
+void MainWindow::InitUdpUI()
+{
+    connect(this, SIGNAL(udpRecvMsg(QString)), ui->textEdit_udp_recv, SLOT(append(QString)));
+
+    QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
+    for (int i = 0; i < ipAddressesList.size(); ++i)
+    {
+        if (ipAddressesList[i].toIPv4Address())
+            ui->comboBox_udp_localIP->addItem(ipAddressesList[i].toString());
+    }
+
+    IniConfig config(INI_PATH);
+    QString section = QString().sprintf("UDP%d", UDP_ID);
+    QVariant IP = config.GetValue(section, "Address", ui->comboBox_udp_localIP->currentText());
+    QVariant Port = config.GetValue(section, "Port", 10000);
+
+    ui->comboBox_udp_localIP->setCurrentText(IP.toString());
+    ui->lineEdit_udp_localPort->setText(Port.toString());
 }
 
 void MainWindow::on_pushButton_tcpServer_bind_clicked()
@@ -83,7 +100,7 @@ void MainWindow::on_pushButton_tcpServer_send_clicked()
     int port = strPort.toInt();
     QString msg = ui->textEdit_tcpServer_send->toPlainText();
     TCPSend(TCP_SERVER_ID, msg.toStdString().c_str(), ip.toStdString().c_str(), port);
-    emit recvMsg(QString().sprintf("[Send to %s]: %s", address.toStdString().c_str(),
+    emit tcpServerRecvMsg(QString().sprintf("[Send to %s]: %s", address.toStdString().c_str(),
                                    msg.toStdString().c_str()));
 }
 
@@ -98,14 +115,14 @@ void MainWindow::delClient(QString client)
     ui->comboBox_tcpServer_clientList->removeItem(nIndex);
 }
 
-int TcpServerRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
+int TcpServerRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, const char* szRecv)
 {
     switch (nType) {
     case RECV_SOCKET:
         pWnd->addClient(QString().sprintf("%s:%d", szIP, nPort));
         break;
     case RECV_DATA:
-        emit pWnd->recvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort, szRecv));
+        emit pWnd->tcpServerRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort, szRecv));
         break;
     case RECV_CLOSE:
         pWnd->delClient(QString().sprintf("%s:%d", szIP, nPort));
@@ -116,17 +133,15 @@ int TcpServerRecvProc(int nType, const char* szIP, int nPort, int nSize, const c
     return 0;
 }
 
-int TcpClientRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* szRecv)
+int TcpClientRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, const char* szRecv)
 {
     switch (nType) {
     case RECV_SOCKET:
-        //pWnd->addClient(QString().sprintf("%s:%d", szIP, nPort));
         break;
     case RECV_DATA:
-        emit pWnd->clientRecvMsg(QString().sprintf("[Received from Server %s:%d]: %s", szIP, nPort, szRecv));
+        emit pWnd->tcpClientRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort, szRecv));
         break;
     case RECV_CLOSE:
-        //pWnd->delClient(QString().sprintf("%s:%d", szIP, nPort));
         break;
     case RECV_ERROR:
         break;
@@ -136,69 +151,74 @@ int TcpClientRecvProc(int nType, const char* szIP, int nPort, int nSize, const c
     return 0;
 }
 
-void MainWindow::on_pushButton_tcpClient_Connect_clicked()
+int UdpRecvProc(int nType, const char* szIP, int nPort, int /*nSize*/, const char* szRecv)
 {
-    if (!m_bIsConnect)
-   {
-        IniConfig config(INI_PATH);
-        QString section = QString().sprintf("TcpClient%d", TCP_CLIENT_ID);
-        config.SetValue(section, "Address", ui->comboBox_tcpClient_serverIP->currentText());
-        config.SetValue(section, "Port", ui->lineEdit_tcpClient_serverPort->text());
-        InitSocket(TCP_CLIENT_ID, TCP_CLIENT, INI_PATH, NULL);
-        if (!TCPConnect(TCP_CLIENT_ID, 50000))
-        {
-            m_bIsConnect = true;
-            ui->pushButton_tcpClient_Connect->setText("断开");
-            ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(255, 0, 0);");
-            m_thread.start();
-        }
-        else
-        {
-            m_bIsConnect = false;
-            ui->pushButton_tcpClient_Connect->setText("连接");
-            ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
-        }
+    switch (nType) {
+    case RECV_SOCKET:
+        break;
+    case RECV_DATA:
+        emit pWnd->udpRecvMsg(QString().sprintf("[Received from %s:%d]: %s", szIP, nPort, szRecv));
+        break;
+    case RECV_CLOSE:
+        break;
+    case RECV_ERROR:
+        break;
+    default:
+        break;
     }
-    else
-    {
-//        UninitSocket(TCP_CLIENT_ID);
-//        m_bIsConnect = false;
-        ui->pushButton_tcpClient_Connect->setText("连接");
-        ui->pushButton_tcpClient_Connect->setStyleSheet("background-color: rgb(50, 50, 255);");
-        m_thread.stop();
-
-    }
+    return 0;
 }
 
 void MainWindow::on_pushButton_tcpClient_send_clicked()
 {
     QString msg = ui->textEdit_tcpClient_send->toPlainText();
     TCPSend(TCP_CLIENT_ID, msg.toStdString().c_str());
-    emit clientRecvMsg(QString().sprintf("[Send]: %s", msg.toStdString().c_str()));
+    emit tcpClientRecvMsg(QString().sprintf("[Send to server]: %s", msg.toStdString().c_str()));
 }
 
-void MainWindow::on_pushButton_tcpClient_recv_clicked()
+void MainWindow::on_pushButton_tcpClient_connect_clicked()
 {
-   // m_thread.start();
-}
-
-CTcpClientRecvThread::CTcpClientRecvThread()
-    : m_bStop(false)
-{
-
-}
-
-void CTcpClientRecvThread::run()
-{
-    char szRecv[1024*4] = { 0 };
-    while(!m_bStop)
+    if (!m_bTcpClientIsConnect)
     {
-        if (TCPRecv(TCP_CLIENT_ID, szRecv, sizeof(szRecv), 1000) == 0)
-            emit pWnd->clientRecvMsg(QString().sprintf("[Recv from server]: %s", szRecv));
+        IniConfig config(INI_PATH);
+        QString section = QString().sprintf("TcpClient%d", TCP_CLIENT_ID);
+        config.SetValue(section, "Address", ui->lineEdit_tcpClient_serverIp->text());
+        config.SetValue(section, "Port", ui->lineEdit_tcpClient_serverPort->text());
+        InitSocket(TCP_CLIENT_ID, TCP_CLIENT, INI_PATH, TcpClientRecvProc);
+        if (TCPConnect(TCP_CLIENT_ID, 5000) == 0)
+        {
+            m_bTcpClientIsConnect = true;
+            ui->pushButton_tcpClient_connect->setText("断开");
+        }
+        else
+        {
+            m_bTcpClientIsConnect = false;
+            ui->pushButton_tcpClient_connect->setText("连接");
+        }
+    }
+    else
+    {
+        UninitSocket(TCP_CLIENT_ID);
+        m_bTcpClientIsConnect = false;
+        ui->pushButton_tcpClient_connect->setText("连接");
     }
 }
 
-void CTcpClientRecvThread::stop()
+void MainWindow::on_pushButton_udp_bind_clicked()
 {
-    m_bStop = true;
+    IniConfig config(INI_PATH);
+    QString section = QString().sprintf("UDP%d", UDP_ID);
+    config.SetValue(section, "Address", ui->comboBox_udp_localIP->currentText());
+    config.SetValue(section, "Port", ui->lineEdit_udp_localPort->text());
+
+    InitSocket(UDP_ID, UDP, INI_PATH, UdpRecvProc);
+}
+
+void MainWindow::on_pushButton_udp_send_clicked()
+{
+    QString strIP = ui->lineEdit_udp_remote_ip->text();
+    int nPort = ui->lineEdit_udp_remote_port->text().toInt();
+    QString msg = ui->textEdit_udp_send->toPlainText();
+    UDPSend(UDP_ID, msg.toStdString().c_str(),
+            strIP.toStdString().c_str(), nPort);
 }

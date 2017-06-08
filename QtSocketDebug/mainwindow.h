@@ -14,18 +14,6 @@ namespace Ui {
 class MainWindow;
 }
 
-class CTcpClientRecvThread : public QThread
-{
-public:
-    CTcpClientRecvThread();
-    ~CTcpClientRecvThread() {}
-    void stop();
-protected:
-    void run();
-private:
-    volatile bool m_bStop;
-};
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -38,22 +26,26 @@ public:
     void delClient(QString client);
 
 signals:
-    void recvMsg(QString msg);
-    void clientRecvMsg(QString msg);
+    void tcpServerRecvMsg(QString msg);
+    void tcpClientRecvMsg(QString msg);
+    void udpRecvMsg(QString msg);
 
 private slots:
     void on_pushButton_tcpServer_bind_clicked();
     void on_pushButton_tcpServer_send_clicked();
-    void on_pushButton_tcpClient_Connect_clicked();
     void on_pushButton_tcpClient_send_clicked();
-    void on_pushButton_tcpClient_recv_clicked();
+    void on_pushButton_tcpClient_connect_clicked();
+
+    void on_pushButton_udp_bind_clicked();
+
+    void on_pushButton_udp_send_clicked();
 
 private:
     Ui::MainWindow *ui;
-    void IniTcpServerUI();
-    void IniTcpClientUI();
-    bool m_bIsConnect;
-    CTcpClientRecvThread m_thread;
+    void InitTcpServerUI();
+    void InitTcpClientUI();
+    void InitUdpUI();
+    bool m_bTcpClientIsConnect;
 };
 
 

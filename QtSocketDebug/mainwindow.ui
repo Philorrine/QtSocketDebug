@@ -18,7 +18,7 @@
     <item row="0" column="1">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_tcpServer">
        <property name="autoFillBackground">
@@ -27,8 +27,8 @@
        <attribute name="title">
         <string>TCP Sever</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout" rowstretch="1,1,3,2" columnstretch="1,4">
-        <item row="0" column="0" rowspan="2">
+       <layout class="QGridLayout" name="gridLayout" rowstretch="1,3,2" columnstretch="1,4">
+        <item row="0" column="0">
          <widget class="QGroupBox" name="groupBox_bind">
           <property name="title">
            <string>绑定本地地址</string>
@@ -71,19 +71,7 @@
           </layout>
          </widget>
         </item>
-        <item row="0" column="1" rowspan="3">
-         <widget class="QGroupBox" name="groupBox_tcpServer_recv">
-          <property name="title">
-           <string>网络数据接收</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <widget class="QTextEdit" name="textEdit_tcpServer_recv"/>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="3" column="1">
+        <item row="2" column="1">
          <widget class="QGroupBox" name="groupBox_tcpServer_Send">
           <property name="title">
            <string>网络数据发送</string>
@@ -112,19 +100,35 @@
           </layout>
          </widget>
         </item>
+        <item row="0" column="1" rowspan="2">
+         <widget class="QGroupBox" name="groupBox_tcpServer_recv">
+          <property name="title">
+           <string>网络数据接收</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QTextEdit" name="textEdit_tcpServer_recv">
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="tab_tcpClient">
        <attribute name="title">
         <string>TCP Client</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_2">
+       <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,3,2" columnstretch="1,4">
         <item row="0" column="0">
-         <widget class="QGroupBox" name="groupBox_bind_3">
+         <widget class="QGroupBox" name="groupBox_tcpClient_connect">
           <property name="title">
            <string>连接服务器地址</string>
           </property>
-          <layout class="QGridLayout" name="_2" rowstretch="0,0,0,0,0" columnstretch="0" rowminimumheight="0,0,0,0,0" columnminimumwidth="0">
+          <layout class="QGridLayout" name="_2" rowstretch="1,1,1,1,1" columnstretch="0">
            <property name="sizeConstraint">
             <enum>QLayout::SetFixedSize</enum>
            </property>
@@ -138,10 +142,10 @@
             <number>12</number>
            </property>
            <property name="horizontalSpacing">
-            <number>-1</number>
+            <number>6</number>
            </property>
            <item row="4" column="0">
-            <widget class="QPushButton" name="pushButton_tcpClient_Connect">
+            <widget class="QPushButton" name="pushButton_tcpClient_connect">
              <property name="text">
               <string>连接</string>
              </property>
@@ -154,50 +158,47 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QComboBox" name="comboBox_tcpClient_serverIP"/>
-           </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="label_tcpServer_localPort_3">
+            <widget class="QLabel" name="label_tcpClient_port">
              <property name="text">
               <string>端口号：</string>
              </property>
             </widget>
            </item>
            <item row="0" column="0">
-            <widget class="QLabel" name="label_tcpServer_localIP_3">
+            <widget class="QLabel" name="label_tcpClient_ip">
              <property name="text">
               <string>IP地址：</string>
              </property>
             </widget>
            </item>
+           <item row="1" column="0">
+            <widget class="QLineEdit" name="lineEdit_tcpClient_serverIp"/>
+           </item>
           </layout>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="QGroupBox" name="groupBox_tcpServer_Send_2">
+        <item row="2" column="1">
+         <widget class="QGroupBox" name="groupBox_tcpClient_send">
           <property name="title">
            <string>网络数据发送</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_8" columnstretch="0,0,0">
-           <property name="sizeConstraint">
-            <enum>QLayout::SetDefaultConstraint</enum>
-           </property>
-           <item row="0" column="0" colspan="3">
-            <widget class="QTextEdit" name="textEdit_tcpClient_send"/>
-           </item>
-           <item row="1" column="2">
+          <layout class="QGridLayout" name="gridLayout_7" columnstretch="1,0">
+           <item row="1" column="1">
             <widget class="QPushButton" name="pushButton_tcpClient_send">
              <property name="text">
               <string>发送</string>
              </property>
             </widget>
            </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="QTextEdit" name="textEdit_tcpClient_send"/>
+           </item>
           </layout>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QGroupBox" name="groupBox_tcpServer_recv_2">
+        <item row="0" column="1" rowspan="2">
+         <widget class="QGroupBox" name="groupBox_tcpClient_recv">
           <property name="title">
            <string>网络数据接收</string>
           </property>
@@ -206,12 +207,9 @@
             <enum>QLayout::SetDefaultConstraint</enum>
            </property>
            <item row="0" column="0" rowspan="2" colspan="2">
-            <widget class="QTextEdit" name="textEdit_tcpClient_recv"/>
-           </item>
-           <item row="2" column="1">
-            <widget class="QPushButton" name="pushButton_tcpClient_recv">
-             <property name="text">
-              <string>接收</string>
+            <widget class="QTextEdit" name="textEdit_tcpClient_recv">
+             <property name="readOnly">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -224,7 +222,122 @@
        <attribute name="title">
         <string>UDP</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_3"/>
+       <layout class="QGridLayout" name="gridLayout_3" rowstretch="1,3,2" columnstretch="1,4">
+        <item row="2" column="1">
+         <widget class="QGroupBox" name="groupBox_udp_send">
+          <property name="title">
+           <string>网络数据发送</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_9" columnstretch="0,0,0,0,1,0">
+           <item row="0" column="0" colspan="6">
+            <widget class="QTextEdit" name="textEdit_udp_send"/>
+           </item>
+           <item row="1" column="5">
+            <widget class="QPushButton" name="pushButton_udp_send">
+             <property name="text">
+              <string>发送</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="lineEdit_udp_remote_ip"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_remote_ip">
+             <property name="text">
+              <string>远程IP</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="3">
+            <widget class="QLineEdit" name="lineEdit_udp_remote_port"/>
+           </item>
+           <item row="1" column="2">
+            <widget class="QLabel" name="label_remote_port">
+             <property name="text">
+              <string>远程端口</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupBox_udp_localaddr">
+          <property name="title">
+           <string>本地地址</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <property name="sizeConstraint">
+            <enum>QLayout::SetFixedSize</enum>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_udp_localIP">
+             <property name="text">
+              <string>IP地址：</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboBox_udp_localIP"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_tcpServer_localPort_2">
+             <property name="text">
+              <string>端口号：</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineEdit_udp_localPort">
+             <property name="inputMask">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_udp_bind">
+             <property name="text">
+              <string>创建</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="1" rowspan="2">
+         <widget class="QGroupBox" name="groupBox_udp_recv">
+          <property name="title">
+           <string>网络数据接收</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_8">
+           <property name="sizeConstraint">
+            <enum>QLayout::SetDefaultConstraint</enum>
+           </property>
+           <item row="0" column="0" rowspan="2" colspan="2">
+            <widget class="QTextEdit" name="textEdit_udp_recv">
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -237,10 +350,25 @@
   <tabstop>comboBox_tcpServer_localIP</tabstop>
   <tabstop>lineEdit_tcpServer_localPort</tabstop>
   <tabstop>pushButton_tcpServer_bind</tabstop>
-  <tabstop>textEdit_tcpServer_recv</tabstop>
-  <tabstop>comboBox_tcpServer_clientList</tabstop>
   <tabstop>textEdit_tcpServer_send</tabstop>
   <tabstop>pushButton_tcpServer_send</tabstop>
+  <tabstop>lineEdit_tcpClient_serverIp</tabstop>
+  <tabstop>lineEdit_tcpClient_serverPort</tabstop>
+  <tabstop>pushButton_tcpClient_connect</tabstop>
+  <tabstop>textEdit_tcpClient_send</tabstop>
+  <tabstop>pushButton_tcpClient_send</tabstop>
+  <tabstop>comboBox_udp_localIP</tabstop>
+  <tabstop>lineEdit_udp_localPort</tabstop>
+  <tabstop>pushButton_udp_bind</tabstop>
+  <tabstop>textEdit_udp_send</tabstop>
+  <tabstop>pushButton_udp_send</tabstop>
+  <tabstop>lineEdit_udp_remote_ip</tabstop>
+  <tabstop>lineEdit_udp_remote_port</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>comboBox_tcpServer_clientList</tabstop>
+  <tabstop>textEdit_tcpServer_recv</tabstop>
+  <tabstop>textEdit_tcpClient_recv</tabstop>
+  <tabstop>textEdit_udp_recv</tabstop>
  </tabstops>
  <resources/>
  <connections/>
