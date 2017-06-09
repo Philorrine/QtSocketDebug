@@ -12,7 +12,8 @@ extern MainWindow* pWnd;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_bTcpClientIsConnect(false)
+    m_bTcpClientIsConnect(false),
+    m_bTcpServerIsBind(false)
 {
     ui->setupUi(this);
     InitTcpServerUI();
@@ -87,8 +88,25 @@ void MainWindow::on_pushButton_tcpServer_bind_clicked()
     QString section = QString().sprintf("TcpServer%d", TCP_SERVER_ID);
     config.SetValue(section, "Address", ui->comboBox_tcpServer_localIP->currentText());
     config.SetValue(section, "Port", ui->lineEdit_tcpServer_localPort->text());
-
-    InitSocket(TCP_SERVER_ID, TCP_SERVER, INI_PATH, TcpServerRecvProc);
+    if (m_bTcpServerIsBind == false)
+    {
+        if (InitSocket(TCP_SERVER_ID, TCP_SERVER, INI_PATH, TcpServerRecvProc) == 0)
+        {
+            ui->pushButton_tcpServer_bind->setText("关闭");
+            m_bTcpServerIsBind = true;
+        }
+        else
+        {
+            ui->pushButton_tcpServer_bind->setText("建立");
+            m_bTcpServerIsBind = false;
+        }
+    }
+    else
+    {
+        UninitSocket(TCP_SERVER_ID);
+        ui->pushButton_tcpServer_bind->setText("建立");
+        m_bTcpServerIsBind = false;
+    }
 }
 
 void MainWindow::on_pushButton_tcpServer_send_clicked()

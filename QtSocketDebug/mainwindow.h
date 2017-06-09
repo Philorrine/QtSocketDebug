@@ -46,6 +46,7 @@ private:
     void InitTcpClientUI();
     void InitUdpUI();
     bool m_bTcpClientIsConnect;
+    bool m_bTcpServerIsBind;
 };
 
 
