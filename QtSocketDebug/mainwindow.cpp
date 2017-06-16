@@ -13,7 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_bTcpClientIsConnect(false),
-    m_bTcpServerIsBind(false)
+    m_bTcpServerIsBind(false),
+    m_bUdpIsCreate(false)
 {
     ui->setupUi(this);
     InitTcpServerUI();
@@ -97,7 +98,7 @@ void MainWindow::on_pushButton_tcpServer_bind_clicked()
         }
         else
         {
-            ui->pushButton_tcpServer_bind->setText("建立");
+            ui->pushButton_tcpServer_bind->setText("创建");
             m_bTcpServerIsBind = false;
         }
     }
@@ -111,6 +112,7 @@ void MainWindow::on_pushButton_tcpServer_bind_clicked()
 
 void MainWindow::on_pushButton_tcpServer_send_clicked()
 {
+    if (!m_bTcpServerIsBind) return;
     QTextCodec* codec = QTextCodec::codecForName("GB18030");
     QString address = ui->comboBox_tcpServer_clientList->currentText();
     QStringList strList = address.split(":");
@@ -203,6 +205,7 @@ int UdpRecvProc(int nType, const char* szIP, int nPort, int nSize, const char* s
 
 void MainWindow::on_pushButton_tcpClient_send_clicked()
 {
+    if (!m_bTcpClientIsConnect) return;
     QTextCodec* codec = QTextCodec::codecForName("GB18030");
     QString msg = ui->textEdit_tcpClient_send->toPlainText();
     QByteArray sendBytes = codec->fromUnicode(msg);
@@ -240,10 +243,13 @@ void MainWindow::on_pushButton_tcpClient_connect_clicked()
 
 void MainWindow::on_pushButton_udp_bind_clicked()
 {
-    IniConfig config(INI_PATH);
-    QString section = QString().sprintf("UDP%d", UDP_ID);
-    config.SetValue(section, "Address", ui->comboBox_udp_localIP->currentText());
-    config.SetValue(section, "Port", ui->lineEdit_udp_localPort->text());
+    if (!m_bUdpIsCreate)
+    {
+        IniConfig config(INI_PATH);
+        QString section = QString().sprintf("UDP%d", UDP_ID);
+        config.SetValue(section, "Address", ui->comboBox_udp_localIP->currentText());
+        config.SetValue(section, "Port", ui->lineEdit_udp_localPort->text());
+    }
 
     InitSocket(UDP_ID, UDP, INI_PATH, UdpRecvProc);
 }

@@ -35,9 +35,7 @@ private slots:
     void on_pushButton_tcpServer_send_clicked();
     void on_pushButton_tcpClient_send_clicked();
     void on_pushButton_tcpClient_connect_clicked();
-
     void on_pushButton_udp_bind_clicked();
-
     void on_pushButton_udp_send_clicked();
 
 private:
@@ -47,6 +45,7 @@ private:
     void InitUdpUI();
     bool m_bTcpClientIsConnect;
     bool m_bTcpServerIsBind;
+    bool m_bUdpIsCreate;
 };
 
 
